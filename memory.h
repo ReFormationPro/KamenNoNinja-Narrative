@@ -18,6 +18,8 @@ enum MOB_TYPE {
 	LOCHNESS
 };
 
+enum MOB_TYPE get_mob_type();
+void set_mob_type(enum MOB_TYPE type);
 void set_on_access_breakpoint(LPVOID addr);
 void load_addresses();
 bool open_process();

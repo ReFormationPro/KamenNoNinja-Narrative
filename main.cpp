@@ -28,7 +28,12 @@ void probe() {
 		//std::cout<< "here" << std::endl;
 		int baldie;
 		if ((baldie = get_enemy_state(BALDIE)) == 128) {
-			cout << "Wild Baldie has appeared" << endl;
+			cout << "A Wild Baldie has appeared" << endl;
+		}
+		if (get_mob_type() == BALDIE) {
+			cout << "Wild Baldie is on screen" << endl;
+		} else {
+			cout << "mob type " << (int)(get_mob_type()) << endl;
 		}
 	}
 }
