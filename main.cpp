@@ -1,7 +1,9 @@
 #include <windows.h>
 #include "memory.h"
-
-
+#include <iostream>
+#include <chrono>
+#include <thread>
+using namespace std;
 /* This is where all the input to the window goes to */
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
 	switch(Message) {
@@ -18,6 +20,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) 
 			return DefWindowProc(hwnd, Message, wParam, lParam);
 	}
 	return 0;
+}
+
+void probe() {
+	while (true) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		//std::cout<< "here" << std::endl;
+		int baldie;
+		if ((baldie = get_enemy_state(BALDIE)) == 128) {
+			cout << "Wild Baldie has appeared" << endl;
+		}
+	}
 }
 
 /* The 'main' function of Win32 GUI programs: this is where execution starts */
@@ -61,6 +74,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	load_addresses();
 	debug();
+	std::thread probe_th (probe);
+	
 	/*
 		This is the heart of our program where all input is processed and 
 		sent to WndProc. Note that GetMessage blocks code flow until it receives something, so
@@ -70,5 +85,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		TranslateMessage(&msg); /* Translate key codes to chars if present */
 		DispatchMessage(&msg); /* Send it to WndProc */
 	}
+	probe_th.join();
 	return msg.wParam;
 }

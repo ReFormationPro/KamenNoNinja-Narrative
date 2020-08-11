@@ -15,26 +15,6 @@ const int TANGLED_HAIR_OFF = 0x3A5;
 const int MOB_TYPE_OFF = 0x373;	//The eagle, the toad, the snakes are not kinds of mob.
 const int ENEMY_FLAGS_BASE_OFF = 0x3C6;
 
-//ENEMY_FLAGS_BASE_OFF + enemy type = is enemy killed
-enum MOB_TYPE {
-	NINJA_KIDS,
-	NINJA_MEN,
-	SKINWALKERS,
-	HUMAN_SISHKEBAB,
-	FINAL_BOSS,
-	ROMANTIC_MAN = 5,
-	BALOON_MAN,
-	POSIDONS_DAUGHTER,	//3CD
-	ELECMAN = 8,
-	TOADMAN,	//OFFSET 3CF
-	REDSKINDUDE,
-	FIRE_OGRE,
-	BALDIE = 12,//3D2
-	BAD_ALAADDIN = 13,
-	IRON_MAN,
-	LOCHNESS
-};
-
 HANDLE hProcess;
 
 LPVOID baseAddr;
@@ -46,12 +26,6 @@ LPCVOID EN_HP2_ADDR;
 LPCVOID TANGLED_HAIR_ADDR;
 LPCVOID MOB_TYPE_ADDR;
 
-int get_enemy_state(enum MOB_TYPE type) {
-	return read_byte((LPCVOID) (baseAddr + (int)ENEMY_FLAGS_BASE_OFF + (int)type));
-}
-void set_enemy_state(enum MOB_TYPE type, int val) {
-	write_byte((LPCVOID) (baseAddr + (int)ENEMY_FLAGS_BASE_OFF + (int)type), val);
-}
 void load_addresses() {
 	ReadProcessMemory(hProcess, (LPCVOID) BASE, (LPVOID) &baseAddr, 4, NULL);
 	PLAYER_HP_ADDR = (LPCVOID) (baseAddr+PL_HP_OFF);
@@ -61,7 +35,12 @@ void load_addresses() {
 	TANGLED_HAIR_ADDR = (LPCVOID) (baseAddr+TANGLED_HAIR_OFF);
 	MOB_TYPE_ADDR = (LPCVOID) (baseAddr+MOB_TYPE_OFF);
 }
-
+int get_enemy_state(enum MOB_TYPE type) {
+	return read_byte((LPCVOID) (baseAddr + (int)ENEMY_FLAGS_BASE_OFF + (int)type));
+}
+void set_enemy_state(enum MOB_TYPE type, int val) {
+	write_byte((LPCVOID) (baseAddr + (int)ENEMY_FLAGS_BASE_OFF + (int)type), val);
+}
 bool open_process() {
 	int dwProcessId;	
     HWND GameWindowHandle = FindWindow(NULL, WINDOW_NAME);
@@ -93,3 +72,32 @@ void debug() {
 	cout << "BALDIE STATE " << get_enemy_state(BALDIE) << endl;
 	write_byte(PLAYER_HP_ADDR, 56);
 }
+
+/* This needs to be injected into the application because we cannot add vectored exception handler to another process */
+LPVOID _addr;
+DWORD dwProtection;
+void test_data_breakpoint() {
+	set_on_access_breakpoint((LPVOID) (baseAddr + (int)ENEMY_FLAGS_BASE_OFF + (int)BALDIE));
+	cout << dwProtection << " " << _addr << endl;
+}
+LONG WINAPI hExceptionFilter(_EXCEPTION_POINTERS* ExceptionInfo)
+{
+    if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION)
+    {
+        /*DWORD dwESI = ExceptionInfo->ContextRecord->Esi;
+        DWORD dwSize = *(DWORD*)(dwESI + 0x14);
+        PVOID pVAC3 = *(PVOID*)(dwESI + 0x18);*/
+        VirtualProtectEx(hProcess, (PVOID)_addr, 0x1, dwProtection, NULL);
+        cout << "Exception Handled Successfully!";
+    }
+    cout << "What did you do?" << endl;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+void set_on_access_breakpoint(LPVOID addr) {
+	_addr = addr;
+    VirtualProtectEx(hProcess, (PVOID)addr, 0x1, PAGE_EXECUTE, &dwProtection);
+    //*(BYTE*)(addr) = 0xCC;
+    //VirtualProtect((PVOID)addr, 0x1, dwProtection, NULL);
+    AddVectoredExceptionHandler(1, hExceptionFilter);
+}
+
