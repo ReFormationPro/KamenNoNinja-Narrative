@@ -13,22 +13,21 @@ const int TANGLED_HAIR_OFF = 0x3A5;
 
 HANDLE hProcess;
 
-int baseAddr;
-// They are not addresses, they are values
+LPVOID baseAddr;
 
-int PLAYER_HP_ADDR;
-int EN_HP_ADDR;
-int EN_HP1_ADDR;
-int EN_HP2_ADDR;
-int TANGLED_HAIR_ADDR;
+LPCVOID PLAYER_HP_ADDR;
+LPCVOID EN_HP_ADDR;
+LPCVOID EN_HP1_ADDR;
+LPCVOID EN_HP2_ADDR;
+LPCVOID TANGLED_HAIR_ADDR;
 
 void load_addresses() {
 	ReadProcessMemory(hProcess, (LPCVOID) BASE, (LPVOID) &baseAddr, 4, NULL);
-	ReadProcessMemory(hProcess, (LPCVOID) baseAddr+PL_HP_OFF, (LPVOID) &PLAYER_HP_ADDR, 4, NULL);
-	ReadProcessMemory(hProcess, (LPCVOID) baseAddr+EN_HP_OFF, (LPVOID) &EN_HP_ADDR, 4, NULL);
-	ReadProcessMemory(hProcess, (LPCVOID) baseAddr+EN_HP1_OFF, (LPVOID) &EN_HP1_ADDR, 4, NULL);
-	ReadProcessMemory(hProcess, (LPCVOID) baseAddr+EN_HP2_OFF, (LPVOID) &EN_HP2_ADDR, 4, NULL);
-	ReadProcessMemory(hProcess, (LPCVOID) baseAddr+TANGLED_HAIR_OFF, (LPVOID) &TANGLED_HAIR_ADDR, 4, NULL);
+	PLAYER_HP_ADDR = (LPCVOID) (baseAddr+PL_HP_OFF);
+	EN_HP_ADDR = (LPCVOID) (baseAddr+EN_HP_OFF);
+	EN_HP1_ADDR = (LPCVOID) (baseAddr+EN_HP1_OFF);
+	EN_HP2_ADDR = (LPCVOID) (baseAddr+EN_HP2_OFF);
+	TANGLED_HAIR_ADDR = (LPCVOID) (baseAddr+TANGLED_HAIR_OFF);
 }
 
 bool open_process() {
@@ -39,14 +38,25 @@ bool open_process() {
  	hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, dwProcessId);
  	return hProcess != NULL;
 }
-
+bool close_process() {
+	int ret = CloseHandle(hProcess);
+	hProcess = NULL;
+	return ret != 0;
+}
 int read_byte(LPCVOID addr) {
 	int ret;
 	ReadProcessMemory(hProcess, addr, (LPVOID) &ret, 1, NULL);
 	return ret;
 }
+bool write_byte(LPCVOID addr, int val) {
+	int ret;
+	LPVOID adr = (LPVOID) addr;
+	WriteProcessMemory(hProcess, adr, (LPCVOID)&val, 1, NULL);
+	return ret;
+}
 
 void debug() {
 	cout << "PLAYER_HP_ADDR " << PLAYER_HP_ADDR << endl;
-	cout << "PLAYER HP " << read_byte((LPCVOID) baseAddr+PL_HP_OFF) << endl;
+	cout << "PLAYER HP " << read_byte(PLAYER_HP_ADDR) << endl;
+	write_byte(PLAYER_HP_ADDR, 56);
 }

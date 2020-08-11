@@ -8,6 +8,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) 
 		
 		/* Upon destruction, tell the main thread to stop */
 		case WM_DESTROY: {
+			close_process();
 			PostQuitMessage(0);
 			break;
 		}
