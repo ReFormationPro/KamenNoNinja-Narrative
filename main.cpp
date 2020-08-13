@@ -3,6 +3,8 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+
+#define MOB_CHECK_PERIOD 1000
 using namespace std;
 /* This is where all the input to the window goes to */
 LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
@@ -22,18 +24,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) 
 	return 0;
 }
 
-void probe() {
+void check_on_screen_mob_thread() {
 	while (true) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		//std::cout<< "here" << std::endl;
-		int baldie;
-		if ((baldie = get_enemy_state(BALDIE)) == 128) {
-			cout << "A Wild Baldie has appeared" << endl;
-		}
-		if (get_mob_type() == BALDIE) {
-			cout << "Wild Baldie is on screen" << endl;
-		} else {
-			cout << "mob type " << (int)(get_mob_type()) << endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds(MOB_CHECK_PERIOD));
+		switch (get_mob_type()) {
+			case NINJA_KIDS:
+			case NINJA_MEN:
+			case SKINWALKERS:
+			case HUMAN_SISHKEBAB:
+				break;
+			case FINAL_BOSS:
+			case ROMANTIC_MAN:
+			case BALOON_MAN:
+			case POSIDONS_DAUGHTER:
+			case ELECMAN:
+			case TOADMAN:
+			case REDSKINDUDE:
+			case FIRE_OGRE:
+				break;
+			case BALDIE:
+				cout << "Baldie is on screen" << endl;
+				break;
+			case BAD_ALAADDIN:
+			case IRON_MAN:
+			case LOCHNESS:
+				break;
 		}
 	}
 }
@@ -79,7 +94,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	load_addresses();
 	debug();
-	std::thread probe_th (probe);
+	std::thread probe_th (check_on_screen_mob_thread);
 	
 	/*
 		This is the heart of our program where all input is processed and 
